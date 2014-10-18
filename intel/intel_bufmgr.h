@@ -183,6 +183,9 @@ void drm_intel_bufmgr_gem_set_vma_cache_size(drm_intel_bufmgr *bufmgr,
 int drm_intel_gem_bo_map_unsynchronized(drm_intel_bo *bo);
 int drm_intel_gem_bo_map_gtt(drm_intel_bo *bo);
 int drm_intel_gem_bo_unmap_gtt(drm_intel_bo *bo);
+int drm_intel_gem_bo_map_wc_unsynchronized(drm_intel_bo *bo);
+int drm_intel_gem_bo_map_wc(drm_intel_bo *bo);
+int drm_intel_gem_bo_unmap_wc(drm_intel_bo *bo);
 
 #define HAVE_DRM_INTEL_GEM_BO_DISABLE_IMPLICIT_SYNC 1
 int drm_intel_bufmgr_gem_can_disable_implicit_sync(drm_intel_bufmgr *bufmgr);
