@@ -130,6 +130,7 @@ typedef struct _drm_intel_bufmgr_gem {
 	unsigned int bo_reuse : 1;
 	unsigned int no_exec : 1;
 	unsigned int has_vebox : 1;
+	unsigned int has_ext_mmap : 1;
 	bool fenced_relocs;
 
 	struct {
@@ -189,6 +190,8 @@ struct _drm_intel_bo_gem {
 	int reloc_count;
 	/** Mapped address for the buffer, saved across map/unmap cycles */
 	void *mem_virtual;
+	/** Uncached Mapped address for the buffer, saved across map/unmap cycles */
+	void *mem_wc_virtual;
 	/** GTT virtual address for the buffer, saved across map/unmap cycles */
 	void *gtt_virtual;
 	/**
@@ -1127,6 +1130,10 @@ drm_intel_gem_bo_free(drm_intel_bo *bo)
 		drm_munmap(bo_gem->gtt_virtual, bo_gem->bo.size);
 		bufmgr_gem->vma_count--;
 	}
+	if (bo_gem->mem_wc_virtual) {
+		munmap(bo_gem->mem_wc_virtual, bo_gem->bo.size);
+		bufmgr_gem->vma_count--;
+	}
 
 	/* Close this object */
 	memclear(close);
@@ -1151,6 +1158,9 @@ drm_intel_gem_bo_mark_mmaps_incoherent(drm_intel_bo *bo)
 
 	if (bo_gem->gtt_virtual)
 		VALGRIND_MAKE_MEM_NOACCESS(bo_gem->gtt_virtual, bo->size);
+
+	if (bo_gem->mem_wc_virtual)
+		VALGRIND_MAKE_MEM_NOACCESS(bo_gem->mem_wc_virtual, bo->size);
 #endif
 }
 
@@ -1196,6 +1206,8 @@ static void drm_intel_gem_bo_purge_vma_cache(drm_intel_bufmgr_gem *bufmgr_gem)
 
 	/* We may need to evict a few entries in order to create new mmaps */
 	limit = bufmgr_gem->vma_max - 2*bufmgr_gem->vma_open;
+	if (bufmgr_gem->has_ext_mmap)
+		limit -= bufmgr_gem->vma_open;
 	if (limit < 0)
 		limit = 0;
 
@@ -1218,6 +1230,11 @@ static void drm_intel_gem_bo_purge_vma_cache(drm_intel_bufmgr_gem *bufmgr_gem)
 			bo_gem->gtt_virtual = NULL;
 			bufmgr_gem->vma_count--;
 		}
+		if (bo_gem->mem_wc_virtual) {
+			munmap(bo_gem->mem_wc_virtual, bo_gem->bo.size);
+			bo_gem->mem_wc_virtual = NULL;
+			bufmgr_gem->vma_count--;
+		}
 	}
 }
 
@@ -1230,6 +1247,8 @@ static void drm_intel_gem_bo_close_vma(drm_intel_bufmgr_gem *bufmgr_gem,
 		bufmgr_gem->vma_count++;
 	if (bo_gem->gtt_virtual)
 		bufmgr_gem->vma_count++;
+	if (bo_gem->mem_wc_virtual)
+		bufmgr_gem->vma_count++;
 	drm_intel_gem_bo_purge_vma_cache(bufmgr_gem);
 }
 
@@ -1241,6 +1260,8 @@ static void drm_intel_gem_bo_open_vma(drm_intel_bufmgr_gem *bufmgr_gem,
 	if (bo_gem->mem_virtual)
 		bufmgr_gem->vma_count--;
 	if (bo_gem->gtt_virtual)
+		bufmgr_gem->vma_count--;
+	if (bo_gem->mem_wc_virtual)
 		bufmgr_gem->vma_count--;
 	drm_intel_gem_bo_purge_vma_cache(bufmgr_gem);
 }
@@ -1337,6 +1358,123 @@ static void drm_intel_gem_bo_unreference(drm_intel_bo *bo)
 	}
 }
 
+static int
+map_wc(drm_intel_bo *bo)
+{
+	drm_intel_bufmgr_gem *bufmgr_gem = (drm_intel_bufmgr_gem *) bo->bufmgr;
+	drm_intel_bo_gem *bo_gem = (drm_intel_bo_gem *) bo;
+	int ret;
+
+	if (bo_gem->is_userptr)
+		return -EINVAL;
+
+	if (!bufmgr_gem->has_ext_mmap)
+		return -EINVAL;
+
+	if (bo_gem->map_count++ == 0)
+		drm_intel_gem_bo_open_vma(bufmgr_gem, bo_gem);
+
+	/* Get a mapping of the buffer if we haven't before. */
+	if (bo_gem->mem_wc_virtual == NULL) {
+		struct drm_i915_gem_mmap mmap_arg;
+
+		DBG("bo_map_wc: mmap %d (%s), map_count=%d\n",
+		    bo_gem->gem_handle, bo_gem->name, bo_gem->map_count);
+
+		memclear(mmap_arg);
+		mmap_arg.handle = bo_gem->gem_handle;
+		/* To indicate the uncached virtual mapping to KMD */
+		mmap_arg.flags = I915_MMAP_WC;
+		mmap_arg.offset = 0;
+		mmap_arg.size = bo->size;
+		ret = drmIoctl(bufmgr_gem->fd,
+			       DRM_IOCTL_I915_GEM_MMAP,
+			       &mmap_arg);
+		if (ret != 0) {
+			ret = -errno;
+			DBG("%s:%d: Error mapping buffer %d (%s): %s .\n",
+			    __FILE__, __LINE__, bo_gem->gem_handle,
+			    bo_gem->name, strerror(errno));
+			if (--bo_gem->map_count == 0)
+				drm_intel_gem_bo_close_vma(bufmgr_gem, bo_gem);
+			return ret;
+		}
+		VG(VALGRIND_MALLOCLIKE_BLOCK(mmap_arg.addr_ptr, mmap_arg.size, 0, 1));
+		bo_gem->mem_wc_virtual = (void *)(uintptr_t) mmap_arg.addr_ptr;
+	}
+
+	bo->virtual = bo_gem->mem_wc_virtual;
+
+	DBG("bo_map_wc: %d (%s) -> %p\n", bo_gem->gem_handle, bo_gem->name,
+	    bo_gem->mem_wc_virtual);
+
+	return 0;
+}
+
+/* To be used in a similar way to mmap_gtt */
+int
+drm_intel_gem_bo_map_wc(drm_intel_bo *bo) {
+	drm_intel_bufmgr_gem *bufmgr_gem = (drm_intel_bufmgr_gem *) bo->bufmgr;
+	drm_intel_bo_gem *bo_gem = (drm_intel_bo_gem *) bo;
+	struct drm_i915_gem_set_domain set_domain;
+	int ret;
+
+	pthread_mutex_lock(&bufmgr_gem->lock);
+
+	ret = map_wc(bo);
+	if (ret) {
+		pthread_mutex_unlock(&bufmgr_gem->lock);
+		return ret;
+	}
+
+	/* Now move it to the GTT domain so that the GPU and CPU
+	 * caches are flushed and the GPU isn't actively using the
+	 * buffer.
+	 *
+	 * The domain change is done even for the objects which
+	 * are not bounded. For them first the pages are acquired,
+	 * before the domain change.
+	 */
+	memclear(set_domain);
+	set_domain.handle = bo_gem->gem_handle;
+	set_domain.read_domains = I915_GEM_DOMAIN_GTT;
+	set_domain.write_domain = I915_GEM_DOMAIN_GTT;
+	ret = drmIoctl(bufmgr_gem->fd,
+		       DRM_IOCTL_I915_GEM_SET_DOMAIN,
+		       &set_domain);
+	if (ret != 0) {
+		DBG("%s:%d: Error setting domain %d: %s\n",
+		    __FILE__, __LINE__, bo_gem->gem_handle,
+		    strerror(errno));
+	}
+	drm_intel_gem_bo_mark_mmaps_incoherent(bo);
+	VG(VALGRIND_MAKE_MEM_DEFINED(bo_gem->mem_wc_virtual, bo->size));
+	pthread_mutex_unlock(&bufmgr_gem->lock);
+
+	return 0;
+}
+
+int
+drm_intel_gem_bo_map_wc_unsynchronized(drm_intel_bo *bo) {
+	drm_intel_bufmgr_gem *bufmgr_gem = (drm_intel_bufmgr_gem *) bo->bufmgr;
+#ifdef HAVE_VALGRIND
+	drm_intel_bo_gem *bo_gem = (drm_intel_bo_gem *) bo;
+#endif
+	int ret;
+
+	pthread_mutex_lock(&bufmgr_gem->lock);
+
+	ret = map_wc(bo);
+	if (ret == 0) {
+		drm_intel_gem_bo_mark_mmaps_incoherent(bo);
+		VG(VALGRIND_MAKE_MEM_DEFINED(bo_gem->mem_wc_virtual, bo->size));
+	}
+
+	pthread_mutex_unlock(&bufmgr_gem->lock);
+
+	return ret;
+}
+
 static int drm_intel_gem_bo_map(drm_intel_bo *bo, int write_enable)
 {
 	drm_intel_bufmgr_gem *bufmgr_gem = (drm_intel_bufmgr_gem *) bo->bufmgr;
@@ -1363,6 +1501,7 @@ static int drm_intel_gem_bo_map(drm_intel_bo *bo, int write_enable)
 
 		memclear(mmap_arg);
 		mmap_arg.handle = bo_gem->gem_handle;
+		mmap_arg.flags = 0;
 		mmap_arg.size = bo->size;
 		ret = drmIoctl(bufmgr_gem->fd,
 			       DRM_IOCTL_I915_GEM_MMAP,
@@ -1619,6 +1758,11 @@ static int drm_intel_gem_bo_unmap(drm_intel_bo *bo)
 	pthread_mutex_unlock(&bufmgr_gem->lock);
 
 	return ret;
+}
+
+int drm_intel_gem_bo_unmap_wc(drm_intel_bo *bo)
+{
+	return drm_intel_gem_bo_unmap(bo);
 }
 
 int
@@ -3609,6 +3753,10 @@ drm_intel_bufmgr_gem_init(int fd, int batch_size)
 	gp.param = I915_PARAM_HAS_VEBOX;
 	ret = drmIoctl(bufmgr_gem->fd, DRM_IOCTL_I915_GETPARAM, &gp);
 	bufmgr_gem->has_vebox = (ret == 0) & (*gp.value > 0);
+
+	gp.param = I915_PARAM_MMAP_VERSION;
+	ret = drmIoctl(bufmgr_gem->fd, DRM_IOCTL_I915_GETPARAM, &gp);
+	bufmgr_gem->has_ext_mmap = (ret == 0) & (*gp.value > 0);
 
 	if (bufmgr_gem->gen < 4) {
 		gp.param = I915_PARAM_NUM_FENCES_AVAIL;
