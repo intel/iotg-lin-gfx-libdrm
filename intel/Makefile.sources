@@ -7,9 +7,11 @@ LIBDRM_INTEL_FILES := \
 	intel_chipset.h \
 	mm.c \
 	mm.h \
-	uthash.h
+	uthash.h \
+	intel_perfmon.c
 
 LIBDRM_INTEL_H_FILES := \
 	intel_bufmgr.h \
 	intel_aub.h \
-	intel_debug.h
+	intel_debug.h \
+	intel_perfmon.h
