@@ -1448,3 +1448,39 @@ drmModeDestroyPropertyBlob(int fd, uint32_t id)
 	destroy.blob_id = id;
 	return DRM_IOCTL(fd, DRM_IOCTL_MODE_DESTROYPROPBLOB, &destroy);
 }
+
+/*
+ * Builds an RGBA 16bpc color value with bits laid out in the format expected
+ * by DRM RGBA properties.  @bpc is the number of bits per component value
+ * being provided as parameters.
+ */
+uint64_t
+drmModeRGBA(unsigned bpc,
+	    uint16_t red,
+	    uint16_t green,
+	    uint16_t blue,
+	    uint16_t alpha)
+{
+	int shift;
+	uint64_t val;
+
+	if (bpc > 16)
+		return -ERANGE;
+
+	/*
+	 * If we were provided with fewer than 16 bpc, shift the value we
+	 * received into the most significant bits.
+	 */
+	shift = 16 - bpc;
+
+	val = red << shift;
+	val <<= 16;
+	val |= green << shift;
+	val <<= 16;
+	val |= blue << shift;
+	val <<= 16;
+	val |= alpha << shift;
+
+	return val;
+}
+
