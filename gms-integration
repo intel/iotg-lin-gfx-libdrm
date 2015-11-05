@@ -1,0 +1,11 @@
+###
+### GMS integration
+###
+upstream 4309bfd9f83dea3864b21311e5b7ad13c70befc4
+	intel: Cleanup SKL PCI ID definitions.
+topic/vpg_ufo_patches b7f35e5f3761a07de9e1f59c3877b4284ca73954
+	drm/i915: Add MESA MOCS values to user-space.
+topic/vpg_gpa_patches 1d69f692c2e807009a962868ebc19e81368a937c
+	libdrm: Perfmon IOCTLs
+kw/20151016 44bf8ac1af8cda778618536f2f54074771ae537b
+	xf86drm: Handle unrecognized subsystems safely in drmGetDevice[s]()
