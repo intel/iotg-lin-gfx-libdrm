@@ -1,0 +1,11 @@
+###
+### GMS integration
+###
+upstream 42f2f92059dca568e896aee93126b8bef2a332a1
+	intel: add the missing <strings.h> include
+topic/vpg_mocs_update 66a12de467b8f728747ec7ac25086a27bf989ec6
+	MUST_REBASE [VPG]: drm/i915: Add MESA MOCS values to user-space.
+topic/vpg_ufo_patches 4259636de25e82b08043c746403200b320dab91c
+	intel: New libdrm interface to create unbound wc user mappings for objects
+topic/vpg_gpa_patches 1d69f692c2e807009a962868ebc19e81368a937c
+	libdrm: Perfmon IOCTLs
