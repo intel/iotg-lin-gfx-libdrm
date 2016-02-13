@@ -22,6 +22,7 @@ LIBDRM_INCLUDE_H_FILES := \
 	include/drm/drm_mode.h \
 	include/drm/drm_sarea.h \
 	include/drm/i915_drm.h \
+	include/drm/i915_perfmon.h \
 	include/drm/mach64_drm.h \
 	include/drm/mga_drm.h \
 	include/drm/nouveau_drm.h \
