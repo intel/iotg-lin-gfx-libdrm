@@ -1,0 +1,15 @@
+###
+### GMS integration
+###
+upstream 9b77443f6344791851a6c2067e4081b7f43618ea
+	freedreno: add support for FD_MAX_FREQ
+topic/vpg_mocs_update 66a12de467b8f728747ec7ac25086a27bf989ec6
+	MUST_REBASE [VPG]: drm/i915: Add MESA MOCS values to user-space.
+topic/vpg_ufo_patches 4259636de25e82b08043c746403200b320dab91c
+	intel: New libdrm interface to create unbound wc user mappings for objects
+topic/vpg_gpa_patches 1d69f692c2e807009a962868ebc19e81368a937c
+	libdrm: Perfmon IOCTLs
+topic/background_color fe0907279957104121ef31d7b8022389498e36d9
+	xf86drmMode: Add RGBA property helpers
+topic/plane_blend b18587e13d71aa737c968ebaaec3bdc5aebf4e9d
+	xf86drmMode: Add plane blending helpers
