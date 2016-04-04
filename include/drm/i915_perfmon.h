@@ -35,7 +35,7 @@ static const unsigned int I915_PERFMON_CONFIG_SIZE = 256;
 
 /* Explicitly aligned to 8 bytes to avoid mismatch
    between 64-bit KM and 32-bit UM. */
-typedef __u64 drm_i915_perfmon_shared_ptr __attribute__((__aligned(8)));
+typedef __u64 drm_i915_perfmon_shared_ptr __attribute__((__aligned__(8)));
 
 struct drm_i915_perfmon_user_config {
 	/* This is pointer to struct drm_i915_perfmon_config_entry.*/
