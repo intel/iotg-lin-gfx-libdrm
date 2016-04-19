@@ -1,0 +1,17 @@
+###
+### GMS integration
+###
+upstream cc9a53f076d4e958e595e1daaff2c286ce1b7bb1
+	headers: Update drm.h
+topic/bxt-enablement ca067e29e9cb2cfe7c692927c4ce0096bffb434b
+	intel/bxt: Add new BXT device ID
+topic/vpg_mocs_update 66a12de467b8f728747ec7ac25086a27bf989ec6
+	MUST_REBASE [VPG]: drm/i915: Add MESA MOCS values to user-space.
+topic/vpg_ufo_patches 2d49da553951883766c4a76d0a0b3cb867e41e18
+	intel: Add interface to query Pooled EU parameters
+topic/vpg_gpa_patches c5fc3677644322ce07a2453a5f3921080de66ff9
+	libdrm: Fix perfmon alignment attribute
+topic/background_color fe0907279957104121ef31d7b8022389498e36d9
+	xf86drmMode: Add RGBA property helpers
+topic/plane_blend 265b8b104580ae85e20b633fa43e85458a6ea837
+	xf86drmMode: Add plane blending helpers
