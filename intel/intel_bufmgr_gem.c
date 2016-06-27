@@ -3531,6 +3531,28 @@ void *drm_intel_gem_bo_map__wc(drm_intel_bo *bo)
 }
 
 /**
+ * Call an extended ioctl
+ */
+int
+i915ExtIoctl(int fd, unsigned long request, void *arg)
+{
+	struct i915_ext_ioctl_data ext_ioctl = {
+		.sub_cmd  = request,
+		.table    = 0,
+		.pad1     = 0,
+		.pad2     = 0,
+
+		/*
+		 * Pointer is converted to a 64-bit integer to guarantee
+		 * compatibility with kernel
+		 */
+		.args_ptr = (__u64)(uintptr_t)arg
+	};
+
+	return drmIoctl(fd, DRM_IOCTL_I915_EXT_IOCTL, &ext_ioctl);
+}
+
+/**
  * Initializes the GEM buffer manager, which uses the kernel to allocate, map,
  * and manage map buffer objections.
  *
