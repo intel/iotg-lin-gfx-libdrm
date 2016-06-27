@@ -293,6 +293,12 @@ int drm_intel_get_eu_total(int fd, unsigned int *eu_total);
 int drm_intel_get_pooled_eu(int fd);
 int drm_intel_get_min_eu_in_pool(int fd);
 
+/*
+ * Interface to extended ioctl's
+ * This should be used instead of calling the ioctl directly
+ */
+int i915ExtIoctl(int fd, unsigned long request, void *arg);
+
 /** @{ Compatibility defines to keep old code building despite the symbol rename
  * from dri_* to drm_intel_*
  */
