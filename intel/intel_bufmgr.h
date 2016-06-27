@@ -276,6 +276,12 @@ int drm_intel_get_reset_stats(drm_intel_context *ctx,
 int drm_intel_get_subslice_total(int fd, unsigned int *subslice_total);
 int drm_intel_get_eu_total(int fd, unsigned int *eu_total);
 
+/*
+ * Interface to extended ioctl's
+ * This should be used instead of calling the ioctl directly
+ */
+int i915ExtIoctl(int fd, unsigned long request, void *arg);
+
 /** @{ Compatibility defines to keep old code building despite the symbol rename
  * from dri_* to drm_intel_*
  */
