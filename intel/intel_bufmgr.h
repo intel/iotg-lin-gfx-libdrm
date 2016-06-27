@@ -161,6 +161,23 @@ int drm_intel_bo_set_tiling(drm_intel_bo *bo, uint32_t * tiling_mode,
 			    uint32_t stride);
 int drm_intel_bo_get_tiling(drm_intel_bo *bo, uint32_t * tiling_mode,
 			    uint32_t * swizzle_mode);
+
+int drm_intel_bo_create_userdata_blk(drm_intel_bo *bo,
+				     uint16_t      flags,
+				     uint32_t      bytes,
+				     const void   *data,
+				     uint32_t     *avail_bytes);
+int drm_intel_bo_set_userdata_blk(drm_intel_bo *bo,
+				  uint32_t      offset,
+				  uint32_t      bytes,
+				  const void   *data,
+				  uint32_t     *avail_bytes);
+int drm_intel_bo_get_userdata_blk(drm_intel_bo *bo,
+				  uint32_t      offset,
+				  uint32_t      bytes,
+				  void         *data,
+				  uint32_t     *avail_bytes);
+
 int drm_intel_bo_flink(drm_intel_bo *bo, uint32_t * name);
 int drm_intel_bo_busy(drm_intel_bo *bo);
 int drm_intel_bo_madvise(drm_intel_bo *bo, int madv);
