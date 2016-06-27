@@ -2727,6 +2727,93 @@ drm_intel_gem_bo_set_softpin_offset(drm_intel_bo *bo, uint64_t offset)
 	return 0;
 }
 
+static int drm_intel_gem_bo_create_userdata_blk(drm_intel_bo *bo,
+						uint16_t      flags,
+						uint32_t      bytes,
+						const void   *data,
+						uint32_t     *avail_bytes)
+{
+	drm_intel_bufmgr_gem *bufmgr_gem = (drm_intel_bufmgr_gem *) bo->bufmgr;
+	drm_intel_bo_gem *bo_gem = (drm_intel_bo_gem *) bo;
+	struct drm_i915_gem_userdata_blk userdata;
+	int ret;
+
+	userdata.op       = I915_USERDATA_CREATE_OP;
+	userdata.flags    = flags;
+	userdata.handle   = bo_gem->gem_handle;
+	userdata.offset   = 0; /* Must be 0 */
+	userdata.bytes    = bytes;
+	userdata.data_ptr = (__u64)(uintptr_t)data;
+
+	ret = i915ExtIoctl(bufmgr_gem->fd,
+			   DRM_IOCTL_I915_EXT_USERDATA,
+			   &userdata);
+
+	*avail_bytes = userdata.bytes;
+	if (ret == -1)
+		return -errno;
+
+	return 0;
+}
+
+static int drm_intel_gem_bo_set_userdata_blk(drm_intel_bo *bo,
+					     uint32_t      offset,
+					     uint32_t      bytes,
+					     const void   *data,
+					     uint32_t     *avail_bytes)
+{
+	drm_intel_bufmgr_gem *bufmgr_gem = (drm_intel_bufmgr_gem *) bo->bufmgr;
+	drm_intel_bo_gem *bo_gem = (drm_intel_bo_gem *) bo;
+	struct drm_i915_gem_userdata_blk userdata;
+	int ret;
+
+	userdata.op       = I915_USERDATA_SET_OP;
+	userdata.flags    = 0;
+	userdata.handle   = bo_gem->gem_handle;
+	userdata.offset   = offset;
+	userdata.bytes    = bytes;
+	userdata.data_ptr = (__u64)(uintptr_t)data;
+
+	ret = i915ExtIoctl(bufmgr_gem->fd,
+			   DRM_IOCTL_I915_EXT_USERDATA,
+			   &userdata);
+
+	*avail_bytes = userdata.bytes;
+	if (ret == -1)
+		return -errno;
+
+	return 0;
+}
+
+static int drm_intel_gem_bo_get_userdata_blk(drm_intel_bo *bo,
+					     uint32_t      offset,
+					     uint32_t      bytes,
+					     void         *data,
+					     uint32_t     *avail_bytes)
+{
+	drm_intel_bufmgr_gem *bufmgr_gem = (drm_intel_bufmgr_gem *) bo->bufmgr;
+	drm_intel_bo_gem *bo_gem = (drm_intel_bo_gem *) bo;
+	struct drm_i915_gem_userdata_blk userdata;
+	int ret;
+
+	userdata.op       = I915_USERDATA_GET_OP;
+	userdata.flags    = 0;
+	userdata.handle   = bo_gem->gem_handle;
+	userdata.offset   = offset;
+	userdata.bytes    = bytes;
+	userdata.data_ptr = (__u64)(uintptr_t)data;
+
+	ret = i915ExtIoctl(bufmgr_gem->fd,
+			   DRM_IOCTL_I915_EXT_USERDATA,
+			   &userdata);
+
+	*avail_bytes = userdata.bytes;
+	if (ret == -1)
+		return -errno;
+
+	return 0;
+}
+
 drm_intel_bo *
 drm_intel_bo_gem_create_from_prime(drm_intel_bufmgr *bufmgr, int prime_fd, int size)
 {
@@ -3658,6 +3745,14 @@ drm_intel_bufmgr_gem_init(int fd, int batch_size)
 	bufmgr_gem->bufmgr.bo_unpin = drm_intel_gem_bo_unpin;
 	bufmgr_gem->bufmgr.bo_get_tiling = drm_intel_gem_bo_get_tiling;
 	bufmgr_gem->bufmgr.bo_set_tiling = drm_intel_gem_bo_set_tiling;
+
+	bufmgr_gem->bufmgr.bo_create_userdata_blk =
+		drm_intel_gem_bo_create_userdata_blk;
+	bufmgr_gem->bufmgr.bo_set_userdata_blk =
+		drm_intel_gem_bo_set_userdata_blk;
+	bufmgr_gem->bufmgr.bo_get_userdata_blk =
+		drm_intel_gem_bo_get_userdata_blk;
+
 	bufmgr_gem->bufmgr.bo_flink = drm_intel_gem_bo_flink;
 	/* Use the new one if available */
 	if (exec2) {
