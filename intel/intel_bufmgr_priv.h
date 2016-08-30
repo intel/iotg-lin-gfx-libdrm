@@ -51,6 +51,15 @@ struct _drm_intel_bufmgr {
 				   unsigned long size, unsigned int alignment);
 
 	/**
+	 * Allocate a buffer object, hinting where the object is supposed to be
+	 * placed (like backed by stolen memory area or by shmem), by using
+	 * flags parameter.
+	 */
+	drm_intel_bo *(*bo_alloc2) (drm_intel_bufmgr *bufmgr, const char *name,
+				   unsigned long size, unsigned int alignment,
+				   unsigned long flags);
+
+	/**
 	 * Allocate a buffer object, hinting that it will be used as a
 	 * render target.
 	 *
