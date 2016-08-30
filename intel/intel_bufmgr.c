@@ -55,6 +55,14 @@ drm_intel_bo_alloc(drm_intel_bufmgr *bufmgr, const char *name,
 }
 
 drm_intel_bo *
+drm_intel_bo_alloc2(drm_intel_bufmgr *bufmgr, const char *name,
+		    unsigned long size, unsigned int alignment,
+		    unsigned long flags)
+{
+	return bufmgr->bo_alloc2(bufmgr, name, size, alignment, flags);
+}
+
+drm_intel_bo *
 drm_intel_bo_alloc_for_render(drm_intel_bufmgr *bufmgr, const char *name,
 			      unsigned long size, unsigned int alignment)
 {

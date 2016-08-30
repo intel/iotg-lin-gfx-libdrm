@@ -110,9 +110,13 @@ typedef struct _drm_intel_aub_annotation {
 } drm_intel_aub_annotation;
 
 #define BO_ALLOC_FOR_RENDER (1<<0)
+#define BO_ALLOC_STOLEN	    (1<<1)
 
 drm_intel_bo *drm_intel_bo_alloc(drm_intel_bufmgr *bufmgr, const char *name,
 				 unsigned long size, unsigned int alignment);
+drm_intel_bo *drm_intel_bo_alloc2(drm_intel_bufmgr *bufmgr, const char *name,
+				  unsigned long size, unsigned int alignment,
+				  unsigned long flags);
 drm_intel_bo *drm_intel_bo_alloc_for_render(drm_intel_bufmgr *bufmgr,
 					    const char *name,
 					    unsigned long size,
