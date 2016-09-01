@@ -3410,6 +3410,76 @@ drm_intel_gem_context_destroy(drm_intel_context *ctx)
 }
 
 int
+drm_intel_gem_context_get_priority(drm_intel_context *ctx, int *priority)
+{
+	drm_intel_bufmgr_gem *bufmgr_gem;
+	struct drm_i915_gem_context_param ctxparam;
+	int ret;
+
+	if ((ctx == NULL) || (priority == NULL))
+		return -EINVAL;
+
+	memclear(ctxparam);
+
+	bufmgr_gem = (drm_intel_bufmgr_gem *)ctx->bufmgr;
+	ctxparam.ctx_id = ctx->ctx_id;
+	ctxparam.param = I915_CONTEXT_PARAM_PRIORITY;
+	ret = drmIoctl(bufmgr_gem->fd, DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM,
+		       &ctxparam);
+	if (ret != 0) {
+		int err = errno;
+		*priority = 0;
+		fprintf(stderr, "DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM failed: %s\n",
+			strerror(err));
+		return -err;
+	}
+
+	*priority = (int) ctxparam.value;
+
+	return 0;
+}
+
+int
+drm_intel_gem_context_set_priority(drm_intel_context *ctx, int priority)
+{
+	drm_intel_bufmgr_gem *bufmgr_gem;
+	struct drm_i915_gem_context_param ctxparam;
+	int ret;
+
+	if (ctx == NULL)
+		return -EINVAL;
+
+	memclear(ctxparam);
+
+	switch (priority) {
+	case DRM_INTEL_CTX_SET_PRIORITY_EGL_LOW:
+		priority = -500;
+		break;
+	case DRM_INTEL_CTX_SET_PRIORITY_EGL_MEDIUM:
+		priority = -0;
+		break;
+	case DRM_INTEL_CTX_SET_PRIORITY_EGL_HIGH:
+		priority = 500;
+		break;
+	}
+
+	bufmgr_gem = (drm_intel_bufmgr_gem *)ctx->bufmgr;
+	ctxparam.ctx_id = ctx->ctx_id;
+	ctxparam.param = I915_CONTEXT_PARAM_PRIORITY;
+	ctxparam.value = priority;
+	ret = drmIoctl(bufmgr_gem->fd, DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM,
+		       &ctxparam);
+	if (ret != 0) {
+		int err = errno;
+		fprintf(stderr, "DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM failed: %s\n",
+			strerror(err));
+		return -err;
+	}
+
+	return 0;
+}
+
+int
 drm_intel_get_reset_stats(drm_intel_context *ctx,
 			  uint32_t *reset_count,
 			  uint32_t *active,

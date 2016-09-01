@@ -233,6 +233,11 @@ int drm_intel_gem_bo_wait(drm_intel_bo *bo, int64_t timeout_ns);
 
 drm_intel_context *drm_intel_gem_context_create(drm_intel_bufmgr *bufmgr);
 void drm_intel_gem_context_destroy(drm_intel_context *ctx);
+int drm_intel_gem_context_get_priority(drm_intel_context *ctx, int *priority);
+#define DRM_INTEL_CTX_SET_PRIORITY_EGL_LOW		(0x10001)
+#define DRM_INTEL_CTX_SET_PRIORITY_EGL_MEDIUM		(0x10002)
+#define DRM_INTEL_CTX_SET_PRIORITY_EGL_HIGH		(0x10003)
+int drm_intel_gem_context_set_priority(drm_intel_context *ctx, int priority);
 int drm_intel_gem_bo_context_exec(drm_intel_bo *bo, drm_intel_context *ctx,
 				  int used, unsigned int flags);
 
