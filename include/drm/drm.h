@@ -642,6 +642,7 @@ struct drm_gem_open {
 #define DRM_CAP_ADDFB2_MODIFIERS	0x10
 #define DRM_CAP_PAGE_FLIP_TARGET	0x11
 #define DRM_CAP_CRTC_IN_VBLANK_EVENT	0x12
+#define DRM_CAP_RENDER_COMPRESSION      0x13
 
 /** DRM_IOCTL_GET_CAP ioctl argument type */
 struct drm_get_cap {
