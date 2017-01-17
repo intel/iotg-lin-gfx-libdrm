@@ -28,6 +28,7 @@
 #define _I915_DRM_H_
 
 #include "drm.h"
+#include <i915_perfmon.h>
 
 /* Please note that modifications to all structs defined here are
  * subject to backwards-compatibility constraints.
@@ -246,6 +247,7 @@ struct i915_ext_ioctl_data
 #define DRM_I915_GEM_USERPTR		0x33
 #define DRM_I915_GEM_CONTEXT_GETPARAM	0x34
 #define DRM_I915_GEM_CONTEXT_SETPARAM	0x35
+#define DRM_I915_PERFMON		0x3e
 
 #define DRM_I915_EXT_IOCTL              0x5F
 
@@ -313,6 +315,9 @@ struct i915_ext_ioctl_data
 
 #define DRM_IOCTL_I915_GEM_GET_APERTURE2 \
 	DRM_IOR(DRM_I915_GEM_GET_APERTURE2, struct drm_i915_gem_get_aperture2)
+
+
+#define DRM_IOCTL_I915_PERFMON		DRM_IOWR(DRM_COMMAND_BASE + DRM_I915_PERFMON, struct drm_i915_perfmon)
 
 /* Allow drivers to submit batchbuffers directly to hardware, relying
  * on the security mechanisms provided by hardware.
