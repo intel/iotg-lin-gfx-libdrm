@@ -744,8 +744,16 @@ drm_intel_gem_bo_alloc_internal(drm_intel_bufmgr *bufmgr,
 	if (flags & BO_ALLOC_FOR_RENDER)
 		for_render = true;
 
-	/* Round the allocated size up to a power of two number of pages. */
-	bucket = drm_intel_gem_bo_bucket_for_size(bufmgr_gem, size);
+	if (flags & BO_ALLOC_STOLEN) {
+		/* No BO caching implemented for stolen backed objects, which
+		 * is fine as comparatively it takes much less time to allocate
+		 * backing pages from Stolen memory.
+		 */
+		bucket = NULL;
+	} else {
+		/* Round the allocated size up to a power of two number of pages. */
+		bucket = drm_intel_gem_bo_bucket_for_size(bufmgr_gem, size);
+	}
 
 	/* If we don't have caching at this size, don't actually round the
 	 * allocation up.
@@ -824,6 +832,9 @@ retry:
 		memclear(create);
 		create.size = bo_size;
 
+		if (flags & BO_ALLOC_STOLEN)
+			create.flags |= I915_CREATE_PLACEMENT_STOLEN;
+
 		ret = drmIoctl(bufmgr_gem->fd,
 			       DRM_IOCTL_I915_GEM_CREATE,
 			       &create);
@@ -857,7 +868,11 @@ retry:
 	bo_gem->reloc_tree_fences = 0;
 	bo_gem->used_as_reloc_target = false;
 	bo_gem->has_error = false;
-	bo_gem->reusable = true;
+	/* No BO caching for stolen backed objects */
+	if (flags & BO_ALLOC_STOLEN)
+		bo_gem->reusable = false;
+	else
+		bo_gem->reusable = true;
 	bo_gem->use_48b_address_range = false;
 
 	drm_intel_bo_gem_set_in_aperture_size(bufmgr_gem, bo_gem, alignment);
@@ -894,6 +909,16 @@ drm_intel_gem_bo_alloc(drm_intel_bufmgr *bufmgr,
 		       unsigned int alignment)
 {
 	return drm_intel_gem_bo_alloc_internal(bufmgr, name, size, 0,
+					       I915_TILING_NONE, 0, 0);
+}
+
+static drm_intel_bo *
+drm_intel_gem_bo_alloc2(drm_intel_bufmgr *bufmgr, const char *name,
+			unsigned long size, unsigned int alignment,
+			unsigned long flags)
+{
+
+	return drm_intel_gem_bo_alloc_internal(bufmgr, name, size, flags,
 					       I915_TILING_NONE, 0, 0);
 }
 
@@ -3960,6 +3985,7 @@ drm_intel_bufmgr_gem_init(int fd, int batch_size)
 	bufmgr_gem->max_relocs = batch_size / sizeof(uint32_t) / 2 - 2;
 
 	bufmgr_gem->bufmgr.bo_alloc = drm_intel_gem_bo_alloc;
+	bufmgr_gem->bufmgr.bo_alloc2 = drm_intel_gem_bo_alloc2;
 	bufmgr_gem->bufmgr.bo_alloc_for_render =
 	    drm_intel_gem_bo_alloc_for_render;
 	bufmgr_gem->bufmgr.bo_alloc_tiled = drm_intel_gem_bo_alloc_tiled;
