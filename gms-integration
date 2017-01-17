@@ -1,0 +1,21 @@
+###
+### GMS integration
+###
+upstream 5856a5868cd70b02892fc759dc8fe5b3e53a8b96
+	README: Fix grammar
+topic/vpg_mocs_update 8a89ba83d193ed1d1aa8e383bfb2c64df8a7e75b
+	intel/mocs: Update I915_MOCS_CACHED entry to avoid snooping
+topic/vpg_ufo_patches afff21b7da36984683046d96a3898c2ebbdacff6
+	include/drm: Add return arguments for aperture2 ioctl
+topic/vpg_gpa_patches 3b3c6cd2592e83d14806eb53fc6acb2c4595392b
+	libdrm: Fix perfmon alignment attribute
+topic/vpg/rbc 643902e8e032865ebe8be0acd3cd66637c7339bc
+	libdrm: Add render compression capability bit
+topic/vpg/huc_patches c515eeed42495b88d89ea067fd287f7aa7d137fd
+	include/drm: Update i915_drm.h for GuC/HuC getparams
+topic/vpg/stolen_memory 85c4b1fdb819257ae0c70e94c1874a87886a5442
+	intel: New libdrm wrapper for the extended gem_create ioctl
+topic/background_color fe0907279957104121ef31d7b8022389498e36d9
+	xf86drmMode: Add RGBA property helpers
+topic/plane_blend 265b8b104580ae85e20b633fa43e85458a6ea837
+	xf86drmMode: Add plane blending helpers
