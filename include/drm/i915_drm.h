@@ -445,6 +445,7 @@ typedef struct drm_i915_irq_wait {
 /* Private (not upstreamed) parameters start from 0x800   */
 /* This helps to avoid conflicts with new upstream values */
 #define I915_PARAM_HAS_GET_APERTURE2     0x802
+#define I915_PARAM_HAS_PREEMPTION        0x806
 
 typedef struct drm_i915_getparam {
 	__s32 param;
@@ -923,7 +924,16 @@ struct drm_i915_gem_execbuffer2 {
  */
 #define I915_EXEC_FENCE_OUT		(1<<17)
 
-#define __I915_EXEC_UNKNOWN_FLAGS (-(I915_EXEC_FENCE_OUT<<1))
+/** Opt in for mid-batch preemption on the submitted batchbuffer.
+ *  User should only set this flag if (1) kernel has confirmed
+ *  support for preemption and recognizes this flag bit as valid,
+ *  and (2) user is certain that batchbuffer commands and other
+ *  configuration settings are compatible with a mid-batch
+ *  preemption.
+ */
+#define I915_EXEC_PREEMPT_MIDBATCH	(1<<18)
+
+#define __I915_EXEC_UNKNOWN_FLAGS -(I915_EXEC_PREEMPT_MIDBATCH<<1)
 
 #define I915_EXEC_CONTEXT_ID_MASK	(0xffffffff)
 #define i915_execbuffer2_set_context_id(eb2, context) \
