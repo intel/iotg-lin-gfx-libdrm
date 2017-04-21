@@ -287,6 +287,10 @@ struct i915_ext_ioctl_data
 
 // ***
 
+#define DRM_I915_EXT_IOCTL              0x5F
+
+// ***
+
 #define DRM_IOCTL_I915_INIT		DRM_IOW( DRM_COMMAND_BASE + DRM_I915_INIT, drm_i915_init_t)
 #define DRM_IOCTL_I915_FLUSH		DRM_IO ( DRM_COMMAND_BASE + DRM_I915_FLUSH)
 #define DRM_IOCTL_I915_FLIP		DRM_IO ( DRM_COMMAND_BASE + DRM_I915_FLIP)
@@ -362,6 +366,12 @@ struct i915_ext_ioctl_data
 
 #define DRM_IOCTL_I915_EXT_USERDATA \
 			DRM_IOWR(DRM_I915_EXT_USERDATA, struct drm_i915_gem_userdata_blk)
+
+#define DRM_IOCTL_I915_EXT_IOCTL        \
+		DRM_IOW(DRM_COMMAND_BASE + DRM_I915_EXT_IOCTL, \
+		struct i915_ext_ioctl_data)
+
+/* Extended ioctl definitions */
 
 /* Allow drivers to submit batchbuffers directly to hardware, relying
  * on the security mechanisms provided by hardware.
@@ -462,6 +472,7 @@ typedef struct drm_i915_irq_wait {
 /* Private (not upstreamed) parameters start from 0x800   */
 /* This helps to avoid conflicts with new upstream values */
 #define I915_PARAM_HAS_GET_APERTURE2     0x802
+#define I915_PARAM_CREATE_VERSION        0x805
 #define I915_PARAM_HAS_PREEMPTION        0x806
 
 typedef struct drm_i915_getparam {
@@ -562,6 +573,46 @@ struct drm_i915_gem_create {
 	 */
 	__u32 handle;
 	__u32 pad;
+	/**
+	 * Requested flags (currently used for placement
+	 * (which memory domain))
+	 *
+	 * You can request that the object be created from special memory
+	 * rather than regular system pages using this parameter. Such
+	 * irregular objects may have certain restrictions (such as CPU
+	 * access to a stolen object is verboten).
+	 *
+	 * This can be used in the future for other purposes too
+	 * e.g. specifying tiling/caching/madvise
+	 */
+	__u64 flags;
+#define I915_CREATE_PLACEMENT_NORMAL 	0 /* standard swappable bo  */
+	/* Allocate the object from memory reserved for the igfx (stolen).
+	 *
+	 * Objects allocated from stolen are restricted in the API they can use,
+	 * as direct CPU access to stolen memory is prohibited by the system.
+	 * This means that you cannot use a regular CPU mmap (either using WB
+	 * or with the WC extension). You can still use a GTT mmap, pwrite,
+	 * pread and pass it around for use by execbuffer and between processes
+	 * like normal.
+	 *
+	 * Stolen memory is a very limited resource and certain functions of the
+	 * hardware can only work from within stolen memory. Userspace's
+	 * allocations may be evicted from stolen and moved to normal memory as
+	 * required. If the allocation is marked as purgeable (using madvise),
+	 * the allocation will be dropped and further access to the object's
+	 * backing storage will result in -EFAULT. Stolen objects will also be
+	 * migrated to normal memory across suspend and resume, as the stolen
+	 * memory is not preserved.
+	 *
+	 * Stolen memory is regarded as a resource placement hint, most suitable
+	 * for medium-sized buffers that are only accessed by the GPU and can be
+	 * discarded.
+	 */
+#define I915_CREATE_PLACEMENT_STOLEN 	1 /* Cannot use CPU mmaps */
+
+#define I915_CREATE_PLACEMENT_MASK	0xff
+#define __I915_CREATE_UNKNOWN_FLAGS	~I915_CREATE_PLACEMENT_MASK
 };
 
 struct drm_i915_gem_pread {
@@ -1179,6 +1230,22 @@ struct drm_i915_gem_get_aperture {
 	 * bytes
 	 */
 	__u64 aper_available_size;
+
+	/**
+	 * Versioning to indicate if map_total_size and stolen_total_size
+	 * value returned are valid or not
+	 */
+	__u64 version;
+
+	/**
+	 * Total space in the mappable region of the aperture, in bytes
+	 */
+	__u64 map_total_size;
+
+	/**
+	 * Total space in the stolen region, in bytes
+	 */
+	__u64 stolen_total_size;
 };
 
 struct drm_i915_gem_get_aperture2 {
