@@ -181,6 +181,22 @@ typedef struct _drm_i915_sarea {
 
 } drm_i915_sarea_t;
 
+struct i915_ext_ioctl_data
+{
+        __u32 sub_cmd;	/* Extended ioctl to call */
+        __u8  table;	/* Reserved, must be zero */
+	__u8  pad1; 	/* Alignment pad */
+	__u16 pad2; 	/* Alignment pad */
+
+	/*
+	 * Kernel-space pointer could be 32-bits or 64-bits
+	 * so use u64 to guarantee compatibility with 64-bit kernels
+	 * This obviates the need to provide both a compat_ioctl and standard
+	 * ioctl for this interface
+	*/
+        __u64 args_ptr;
+};
+
 /* due to userspace building against these headers we need some compat here */
 #define planeA_x pipeA_x
 #define planeA_y pipeA_y
@@ -261,6 +277,10 @@ typedef struct _drm_i915_sarea {
 #define DRM_I915_GEM_CONTEXT_SETPARAM	0x35
 #define DRM_I915_PERF_OPEN		0x36
 
+#define DRM_I915_EXT_IOCTL              0x5F
+
+// ***
+
 #define DRM_IOCTL_I915_INIT		DRM_IOW( DRM_COMMAND_BASE + DRM_I915_INIT, drm_i915_init_t)
 #define DRM_IOCTL_I915_FLUSH		DRM_IO ( DRM_COMMAND_BASE + DRM_I915_FLUSH)
 #define DRM_IOCTL_I915_FLIP		DRM_IO ( DRM_COMMAND_BASE + DRM_I915_FLIP)
@@ -315,6 +335,16 @@ typedef struct _drm_i915_sarea {
 #define DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM	DRM_IOWR (DRM_COMMAND_BASE + DRM_I915_GEM_CONTEXT_GETPARAM, struct drm_i915_gem_context_param)
 #define DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM	DRM_IOWR (DRM_COMMAND_BASE + DRM_I915_GEM_CONTEXT_SETPARAM, struct drm_i915_gem_context_param)
 #define DRM_IOCTL_I915_PERF_OPEN	DRM_IOW(DRM_COMMAND_BASE + DRM_I915_PERF_OPEN, struct drm_i915_perf_open_param)
+
+#define DRM_IOCTL_I915_EXT_IOCTL        \
+		DRM_IOW(DRM_COMMAND_BASE + DRM_I915_EXT_IOCTL, \
+		struct i915_ext_ioctl_data)
+
+/* Extended ioctl definitions */
+#define DRM_I915_GEM_GET_APERTURE2     0x1
+
+#define DRM_IOCTL_I915_GEM_GET_APERTURE2 \
+	DRM_IOR(DRM_I915_GEM_GET_APERTURE2, struct drm_i915_gem_get_aperture2)
 
 /* Allow drivers to submit batchbuffers directly to hardware, relying
  * on the security mechanisms provided by hardware.
@@ -411,6 +441,11 @@ typedef struct drm_i915_irq_wait {
  * current request is complete. See I915_EXEC_FENCE_IN and I915_EXEC_FENCE_OUT.
  */
 #define I915_PARAM_HAS_EXEC_FENCE	 44
+
+/* Private (not upstreamed) parameters start from 0x800   */
+/* This helps to avoid conflicts with new upstream values */
+#define I915_PARAM_HAS_GET_APERTURE2     0x802
+#define I915_PARAM_HAS_PREEMPTION        0x806
 
 typedef struct drm_i915_getparam {
 	__s32 param;
@@ -889,7 +924,16 @@ struct drm_i915_gem_execbuffer2 {
  */
 #define I915_EXEC_FENCE_OUT		(1<<17)
 
-#define __I915_EXEC_UNKNOWN_FLAGS (-(I915_EXEC_FENCE_OUT<<1))
+/** Opt in for mid-batch preemption on the submitted batchbuffer.
+ *  User should only set this flag if (1) kernel has confirmed
+ *  support for preemption and recognizes this flag bit as valid,
+ *  and (2) user is certain that batchbuffer commands and other
+ *  configuration settings are compatible with a mid-batch
+ *  preemption.
+ */
+#define I915_EXEC_PREEMPT_MIDBATCH	(1<<18)
+
+#define __I915_EXEC_UNKNOWN_FLAGS -(I915_EXEC_PREEMPT_MIDBATCH<<1)
 
 #define I915_EXEC_CONTEXT_ID_MASK	(0xffffffff)
 #define i915_execbuffer2_set_context_id(eb2, context) \
@@ -1086,6 +1130,32 @@ struct drm_i915_gem_get_aperture {
 	 * bytes
 	 */
 	__u64 aper_available_size;
+};
+
+struct drm_i915_gem_get_aperture2 {
+	/** Total size of the aperture used by i915_gem_execbuffer, in bytes */
+	__u64 aper_size;
+
+	/**
+	 * Available space in the aperture used by i915_gem_execbuffer, in
+	 * bytes
+	 */
+	__u64 aper_available_size;
+
+	/**
+	 * Total space in the mappable region of the aperture, in bytes
+	 */
+	__u64 map_total_size;
+
+	/**
+	 * Available space in the mappable region of the aperture, in bytes
+	 */
+	__u64 map_available_size;
+
+	/**
+	 * Single largest available region inside the mappable region, in bytes.
+	 */
+	__u64 map_largest_size;
 };
 
 struct drm_i915_get_pipe_from_crtc_id {
