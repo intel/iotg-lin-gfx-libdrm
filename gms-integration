@@ -1,0 +1,21 @@
+###
+### GMS integration
+###
+upstream 691a21579962d2db2d5cb1de5286fa86ef22214f
+	modetest: fix printing of fourcc on BE machines
+topic/vpg_mocs_update 8a89ba83d193ed1d1aa8e383bfb2c64df8a7e75b
+	intel/mocs: Update I915_MOCS_CACHED entry to avoid snooping
+topic/vpg_ufo_patches c297055bab617eb010f3d96f5b8545eb78862fd1
+	intel: Add preemption query and control interface
+topic/vpg_gpa_patches 65e7f56bb653eeee351738f01d91961ae3425cba
+	libdrm: Fix perfmon alignment attribute
+topic/vpg/rbc ef3be86e71c8c69ccfa6389e2dc0d370f96b3fef
+	libdrm: Add render compression capability bit
+topic/vpg/stolen_memory 6e72e8caedb7a432c54558db17979ccdc73aca5e
+	intel: New libdrm wrapper for the extended gem_create ioctl
+topic/vpg/media_watchdog 582882d420846fb2b9f40e6cd4233e22fdfcd397
+	intel: Watchdog timeout: DRM kernel interface to set the timeout
+topic/background_color fe0907279957104121ef31d7b8022389498e36d9
+	xf86drmMode: Add RGBA property helpers
+topic/plane_blend 265b8b104580ae85e20b633fa43e85458a6ea837
+	xf86drmMode: Add plane blending helpers
