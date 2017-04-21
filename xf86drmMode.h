@@ -520,6 +520,13 @@ extern int drmModeCreatePropertyBlob(int fd, const void *data, size_t size,
 				     uint32_t *id);
 extern int drmModeDestroyPropertyBlob(int fd, uint32_t id);
 
+extern uint64_t drmModeRGBA(unsigned bpc,
+			    uint16_t red,
+			    uint16_t green,
+			    uint16_t blue,
+			    uint16_t alpha);
+#define DRM_RGBA8888(r, g, b, a)     drmModeRGBA(8, r, g, b, a)
+#define DRM_RGBA16161616(r, g, b, a) drmModeRGBA(16, r, g, b, a)
 
 #if defined(__cplusplus)
 }
