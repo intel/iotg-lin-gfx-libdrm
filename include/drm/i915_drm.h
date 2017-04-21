@@ -28,6 +28,7 @@
 #define _I915_DRM_H_
 
 #include "drm.h"
+#include <i915_perfmon.h>
 
 #if defined(__cplusplus)
 extern "C" {
@@ -276,6 +277,7 @@ struct i915_ext_ioctl_data
 #define DRM_I915_GEM_CONTEXT_GETPARAM	0x34
 #define DRM_I915_GEM_CONTEXT_SETPARAM	0x35
 #define DRM_I915_PERF_OPEN		0x36
+#define DRM_I915_PERFMON		0x3e
 
 #define DRM_I915_EXT_IOCTL              0x5F
 
@@ -335,6 +337,7 @@ struct i915_ext_ioctl_data
 #define DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM	DRM_IOWR (DRM_COMMAND_BASE + DRM_I915_GEM_CONTEXT_GETPARAM, struct drm_i915_gem_context_param)
 #define DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM	DRM_IOWR (DRM_COMMAND_BASE + DRM_I915_GEM_CONTEXT_SETPARAM, struct drm_i915_gem_context_param)
 #define DRM_IOCTL_I915_PERF_OPEN	DRM_IOW(DRM_COMMAND_BASE + DRM_I915_PERF_OPEN, struct drm_i915_perf_open_param)
+#define DRM_IOCTL_I915_PERFMON		DRM_IOWR(DRM_COMMAND_BASE + DRM_I915_PERFMON, struct drm_i915_perfmon)
 
 #define DRM_IOCTL_I915_EXT_IOCTL        \
 		DRM_IOW(DRM_COMMAND_BASE + DRM_I915_EXT_IOCTL, \
